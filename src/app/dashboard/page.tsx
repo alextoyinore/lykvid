@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { UploadCloud, FileText, Video, ListChecks, Wand2, Loader2, AspectRatio } from 'lucide-react';
+import { UploadCloud, FileText, Video, ListChecks, Wand2, Loader2, RectangleHorizontal, Smartphone } from 'lucide-react';
 import { extractLyrics, type ExtractLyricsInput } from '@/ai/flows/extract-lyrics';
 import { useToast } from "@/hooks/use-toast";
 
@@ -185,7 +185,7 @@ export default function DashboardPage() {
                 <Card className="bg-card/50">
                     <CardHeader>
                         <CardTitle className="font-headline text-lg flex items-center">
-                            <AspectRatio className="mr-2 h-5 w-5 text-primary" /> Landscape Video (16:9)
+                            <RectangleHorizontal className="mr-2 h-5 w-5 text-primary" /> Landscape Video (16:9)
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
