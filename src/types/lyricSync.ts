@@ -15,6 +15,7 @@ export interface LyricSyncState {
   isPlaying: boolean;
   currentTime: number; // current playback time in seconds
   isSynchronized: boolean;
+  audioBuffer: AudioBuffer | null;
 }
 
 export interface LyricSyncAction {
@@ -26,3 +27,4 @@ export interface LyricSyncAction {
     endTime?: number;
   };
 }
+

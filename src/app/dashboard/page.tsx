@@ -15,7 +15,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useLyricSync } from '@/hooks/useLyricSync';
 import { AudioPlayer } from '@/components/lyricSync/AudioPlayer';
 import { Timeline } from '@/components/lyricSync/Timeline';
-import { LyricPhrase } from '@/types/lyricSync';
 
 export default function DashboardPage() {
   const [audioFile, setAudioFile] = useState<File | null>(null);
@@ -27,7 +26,7 @@ export default function DashboardPage() {
 
   const { toast } = useToast();
 
-  const { state, play, pause, seek, selectPhrase, updateTiming } = useLyricSync(audioFile);
+  const { state, play, pause, seek, selectPhrase, updateTiming } = useLyricSync(audioFile, lyrics);
 
   const reset = () => {
     setAudioFile(null);

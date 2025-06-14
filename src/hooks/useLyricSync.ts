@@ -2,16 +2,32 @@ import { useState, useEffect, useCallback } from 'react';
 import { LyricSyncState, LyricSyncAction, SynchronizedLyrics } from '@/types/lyricSync';
 import { createAudioContext } from '@/utils/audioContext';
 
-export function useLyricSync(lyrics: string | null) {
+export function useLyricSync(file: File | null, lyrics: string | null = null) {
   const [state, setState] = useState<LyricSyncState>({
     synchronizedLyrics: null,
     currentPhrase: null,
     isPlaying: false,
     currentTime: 0,
     isSynchronized: false,
+    audioBuffer: null,
   });
 
-  const { audioContext, audioBuffer, setAudioBuffer } = createAudioContext();
+  const { audioContext } = createAudioContext();
+
+  useEffect(() => {
+    if (file) {
+      const loadAudio = async () => {
+        try {
+          const arrayBuffer = await file.arrayBuffer();
+          const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+          setState(prev => ({ ...prev, audioBuffer }));
+        } catch (error) {
+          console.error('Error loading audio:', error);
+        }
+      };
+      loadAudio();
+    }
+  }, [file, audioContext]);
 
   // Initialize synchronized lyrics when lyrics are available
   useEffect(() => {
@@ -31,14 +47,14 @@ export function useLyricSync(lyrics: string | null) {
   }, [lyrics]);
 
   const play = useCallback(() => {
-    if (audioBuffer && !state.isPlaying) {
+    if (state.audioBuffer && !state.isPlaying) {
       const source = audioContext.createBufferSource();
-      source.buffer = audioBuffer;
+      source.buffer = state.audioBuffer;
       source.connect(audioContext.destination);
       source.start(0, state.currentTime);
       setState(prev => ({ ...prev, isPlaying: true }));
     }
-  }, [audioBuffer, state.isPlaying, state.currentTime, audioContext]);
+  }, [state.audioBuffer, state.isPlaying, state.currentTime, audioContext]);
 
   const pause = useCallback(() => {
     setState(prev => ({ ...prev, isPlaying: false }));
@@ -82,7 +98,12 @@ export function useLyricSync(lyrics: string | null) {
       isPlaying: false,
       currentTime: 0,
       isSynchronized: false,
+      audioBuffer: null,
     });
+  }, []);
+
+  const setAudioBuffer = useCallback((buffer: AudioBuffer | null) => {
+    setState(prev => ({ ...prev, audioBuffer: buffer }));
   }, []);
 
   return {
