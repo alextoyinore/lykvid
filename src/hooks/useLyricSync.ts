@@ -10,6 +10,7 @@ export function useLyricSync(file: File | null, lyrics: string | null = null) {
     currentTime: 0,
     isSynchronized: false,
     audioBuffer: null,
+    currentFrequency: 0
   });
 
   const { audioContext } = createAudioContext();
@@ -59,7 +60,13 @@ export function useLyricSync(file: File | null, lyrics: string | null = null) {
 
       const source = audioContext.createBufferSource();
       source.buffer = state.audioBuffer;
-      source.connect(audioContext.destination);
+      
+      // Create analyser node for beat detection
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 2048;
+      analyser.smoothingTimeConstant = 0.8;
+      source.connect(analyser);
+      analyser.connect(audioContext.destination);
       
       // Calculate when to stop the audio
       const duration = state.audioBuffer.duration;
@@ -77,7 +84,20 @@ export function useLyricSync(file: File | null, lyrics: string | null = null) {
             audioContext.currentTime - startTime + state.currentTime,
             state.synchronizedLyrics?.audioDuration || 0
           );
-          setState(prev => ({ ...prev, currentTime }));
+          
+          // Get frequency data for beat detection
+          const frequencyData = new Uint8Array(analyser.frequencyBinCount);
+          analyser.getByteFrequencyData(frequencyData);
+          
+          // Calculate average frequency
+          const averageFrequency = frequencyData.reduce((a, b) => a + b) / frequencyData.length;
+          
+          // Update state with current time and frequency
+          setState(prev => ({ 
+            ...prev, 
+            currentTime,
+            currentFrequency: averageFrequency
+          }));
           
           // Update current phrase based on time
           if (state.synchronizedLyrics) {
@@ -89,11 +109,15 @@ export function useLyricSync(file: File | null, lyrics: string | null = null) {
             }
           }
         }
-      }, 100); // Update every 100ms
+      }, 50); // Update every 50ms for better accuracy
 
       setTimeUpdateInterval(interval);
       
-      setState(prev => ({ ...prev, isPlaying: true }));
+      setState(prev => ({ 
+        ...prev, 
+        isPlaying: true,
+        currentFrequency: 0
+      }));
     }
   }, [state.audioBuffer, state.isPlaying, state.currentTime, audioContext, currentSource, state.synchronizedLyrics]);
 
@@ -147,6 +171,7 @@ export function useLyricSync(file: File | null, lyrics: string | null = null) {
       isPlaying: false,
       currentTime: 0,
       isSynchronized: false,
+      currentFrequency: 0,
       audioBuffer: null,
     });
   }, []);
