@@ -47,21 +47,34 @@ export function useLyricSync(file: File | null, lyrics: string | null = null) {
   }, [lyrics]);
 
   const [currentSource, setCurrentSource] = useState<AudioBufferSourceNode | null>(null);
+  const [timeUpdateInterval, setTimeUpdateInterval] = useState<NodeJS.Timeout | null>(null);
 
   const play = useCallback(() => {
     if (state.audioBuffer && !state.isPlaying) {
+      // Clean up any existing source
+      if (currentSource) {
+        currentSource.stop();
+        setCurrentSource(null);
+      }
+
       const source = audioContext.createBufferSource();
       source.buffer = state.audioBuffer;
       source.connect(audioContext.destination);
+      
+      // Calculate when to stop the audio
+      const duration = state.audioBuffer.duration;
+      const startTime = audioContext.currentTime;
+      const endTime = startTime + (duration - state.currentTime);
+      
+      // Start the audio
       source.start(0, state.currentTime);
       setCurrentSource(source);
-      setState(prev => ({ ...prev, isPlaying: true }));
-
+      
       // Start time update interval
-      const intervalId = setInterval(() => {
-        if (currentSource && state.audioBuffer) {
+      const interval = setInterval(() => {
+        if (state.audioBuffer) {
           const currentTime = Math.min(
-            state.currentTime + (audioContext.currentTime * state.audioBuffer.duration),
+            audioContext.currentTime - startTime + state.currentTime,
             state.synchronizedLyrics?.audioDuration || 0
           );
           setState(prev => ({ ...prev, currentTime }));
@@ -78,14 +91,20 @@ export function useLyricSync(file: File | null, lyrics: string | null = null) {
         }
       }, 100); // Update every 100ms
 
-      return () => clearInterval(intervalId);
+      setTimeUpdateInterval(interval);
+      
+      setState(prev => ({ ...prev, isPlaying: true }));
     }
-  }, [state.audioBuffer, state.isPlaying, state.currentTime, audioContext, currentSource]);
+  }, [state.audioBuffer, state.isPlaying, state.currentTime, audioContext, currentSource, state.synchronizedLyrics]);
 
   const pause = useCallback(() => {
     if (currentSource) {
       currentSource.stop();
       setCurrentSource(null);
+    }
+    if (timeUpdateInterval) {
+      clearInterval(timeUpdateInterval);
+      setTimeUpdateInterval(null);
     }
     setState(prev => ({ ...prev, isPlaying: false }));
   }, [currentSource]);

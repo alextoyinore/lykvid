@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { LyricPhrase } from '@/types/lyricSync';
 
 interface TimelineProps {
@@ -54,7 +54,7 @@ export function Timeline({
   console.log(phrases);
 
   return (
-    <div className="relative w-full h-96">
+    <div className="relative w-full h-60 my-5 py-5">
       {/* Timeline line */}
       <div className="absolute left-0 top-0 h-full w-px bg-muted/50" />
       
@@ -93,7 +93,7 @@ export function Timeline({
         >
           {/* Start marker */}
           <div
-            className="absolute left-0 top-0 h-2 w-2 rounded-full bg-primary"
+            className="absolute left-0 top-0 h-full w-1 rounded-full bg-primary/10"
             style={{
               top: '50%',
               transform: 'translateY(-50%)'
@@ -102,19 +102,18 @@ export function Timeline({
           
           {/* End marker */}
           <div
-            className="absolute right-0 top-0 h-2 w-2 rounded-full bg-primary"
+            className="absolute right-0 top-0 h-full w-1 rounded-full bg-primary/10"
             style={{
               top: '50%',
               transform: 'translateY(-50%)'
             }}
           />
-          
-          {/* Content */}
-          <div className="absolute left-0 top-full mt-2 w-full text-sm">
-            {phrase.text}
-          </div>
         </div>
       ))}
+      {/* Content */}
+      <div className="absolute left-0 top-full mt-2 w-full text-sm">
+        {phrases[currentPhrase || 0]?.text}
+      </div>
     </div>
   );
 }
