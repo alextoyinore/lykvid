@@ -46,19 +46,49 @@ export function useLyricSync(file: File | null, lyrics: string | null = null) {
     }
   }, [lyrics]);
 
+  const [currentSource, setCurrentSource] = useState<AudioBufferSourceNode | null>(null);
+
   const play = useCallback(() => {
     if (state.audioBuffer && !state.isPlaying) {
       const source = audioContext.createBufferSource();
       source.buffer = state.audioBuffer;
       source.connect(audioContext.destination);
       source.start(0, state.currentTime);
+      setCurrentSource(source);
       setState(prev => ({ ...prev, isPlaying: true }));
+
+      // Start time update interval
+      const intervalId = setInterval(() => {
+        if (currentSource && state.audioBuffer) {
+          const currentTime = Math.min(
+            state.currentTime + (audioContext.currentTime * state.audioBuffer.duration),
+            state.synchronizedLyrics?.audioDuration || 0
+          );
+          setState(prev => ({ ...prev, currentTime }));
+          
+          // Update current phrase based on time
+          if (state.synchronizedLyrics) {
+            const currentPhrase = state.synchronizedLyrics.phrases.findIndex(phrase => {
+              return currentTime >= phrase.startTime && currentTime < phrase.endTime;
+            });
+            if (currentPhrase !== -1) {
+              setState(prev => ({ ...prev, currentPhrase }));
+            }
+          }
+        }
+      }, 100); // Update every 100ms
+
+      return () => clearInterval(intervalId);
     }
-  }, [state.audioBuffer, state.isPlaying, state.currentTime, audioContext]);
+  }, [state.audioBuffer, state.isPlaying, state.currentTime, audioContext, currentSource]);
 
   const pause = useCallback(() => {
+    if (currentSource) {
+      currentSource.stop();
+      setCurrentSource(null);
+    }
     setState(prev => ({ ...prev, isPlaying: false }));
-  }, []);
+  }, [currentSource]);
 
   const seek = useCallback((time: number) => {
     setState(prev => ({ ...prev, currentTime: time }));

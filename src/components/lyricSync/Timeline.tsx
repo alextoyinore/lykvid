@@ -5,6 +5,7 @@ interface TimelineProps {
   phrases: LyricPhrase[];
   currentTime: number;
   currentPhrase: number | null;
+  isPlaying: boolean;
   onPhraseSelect: (index: number) => void;
   onUpdateTiming: (phraseIndex: number, startTime: number, endTime: number) => void;
 }
@@ -13,6 +14,7 @@ export function Timeline({
   phrases,
   currentTime,
   currentPhrase,
+  isPlaying,
   onPhraseSelect,
   onUpdateTiming,
 }: TimelineProps) {
@@ -49,6 +51,8 @@ export function Timeline({
 
   const totalDuration = phrases.length > 0 ? phrases[phrases.length - 1].endTime : 0;
 
+  console.log(phrases);
+
   return (
     <div className="relative w-full h-96">
       {/* Timeline line */}
@@ -56,7 +60,7 @@ export function Timeline({
       
       {/* Progress */}
       <div 
-        className="absolute left-0 top-0 h-full w-px bg-primary"
+        className="absolute left-0 top-0 h-1 bg-primary"
         style={{
           width: `${(currentTime / totalDuration) * 100}%`
         }}
@@ -75,7 +79,7 @@ export function Timeline({
         <div
           key={index}
           className={`absolute left-0 top-0 h-full cursor-pointer ${
-            currentPhrase === index ? 'bg-primary/20' : ''
+            isPlaying && currentPhrase === index ? 'bg-primary/20' : ''
           }`}
           style={{
             left: `${(phrase.startTime / totalDuration) * 100}%`,

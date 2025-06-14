@@ -198,6 +198,7 @@ export default function DashboardPage() {
                         phrases={state.synchronizedLyrics?.phrases || []}
                         currentTime={state.currentTime}
                         currentPhrase={state.currentPhrase}
+                        isPlaying={state.isPlaying}
                         onPhraseSelect={selectPhrase}
                         onUpdateTiming={updateTiming}
                       />
