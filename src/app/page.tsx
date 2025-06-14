@@ -3,7 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Zap, Music, Film, Smartphone, BarChart3 } from 'lucide-react';
+import { Zap, Music, Film, BarChart3 } from 'lucide-react';
 
 export default function HomePage() {
   const features = [

@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -9,9 +9,13 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { UploadCloud, FileText, Video, ListChecks, Wand2, Loader2, RectangleHorizontal, Smartphone } from 'lucide-react';
+import { UploadCloud, FileText, Video, ListChecks, Wand2, Loader2, RectangleHorizontal, Smartphone, Save } from 'lucide-react';
 import { extractLyrics, type ExtractLyricsInput } from '@/ai/flows/extract-lyrics';
 import { useToast } from "@/hooks/use-toast";
+import { useLyricSync } from '@/hooks/useLyricSync';
+import { AudioPlayer } from '@/components/lyricSync/AudioPlayer';
+import { Timeline } from '@/components/lyricSync/Timeline';
+import { LyricPhrase } from '@/types/lyricSync';
 
 export default function DashboardPage() {
   const [audioFile, setAudioFile] = useState<File | null>(null);
@@ -22,6 +26,21 @@ export default function DashboardPage() {
   const [progress, setProgress] = useState(0); // For potential upload progress
 
   const { toast } = useToast();
+
+  const { state, play, pause, seek, selectPhrase, updateTiming } = useLyricSync(audioFile);
+
+  const reset = () => {
+    setAudioFile(null);
+    setAudioDataUri(null);
+    setLyrics(null);
+    setError(null);
+    setProgress(0);
+    toast({
+      title: "Reset Complete",
+      description: "All audio and lyrics have been cleared.",
+      variant: "destructive"
+    });
+  };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -159,13 +178,54 @@ export default function DashboardPage() {
               </div>
             )}
             {lyrics && (
-                <div className="p-4 border rounded-md bg-card/50">
-                    <h3 className="font-headline text-lg mb-2 flex items-center"><ListChecks className="mr-2 h-5 w-5 text-primary" /> Lyric Synchronization (Coming Soon)</h3>
-                    <p className="text-sm text-muted-foreground">
-                        This section will allow you to fine-tune lyric timing with the audio playback. 
-                        Visualize phrases and adjust their start and end points for perfect synchronization.
-                    </p>
-                    <Button variant="outline" className="mt-4" disabled>Adjust Timing</Button>
+                <div className="space-y-4">
+                  <Card className="bg-card/50">
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <ListChecks className="mr-2 h-5 w-5 text-primary" />
+                        Lyric Synchronization
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <AudioPlayer
+                        isPlaying={state.isPlaying}
+                        currentTime={state.currentTime}
+                        audioDuration={state.synchronizedLyrics?.audioDuration || 0}
+                        onPlay={play}
+                        onPause={pause}
+                        onSeek={seek}
+                      />
+                      <Timeline
+                        phrases={state.synchronizedLyrics?.phrases || []}
+                        currentTime={state.currentTime}
+                        currentPhrase={state.currentPhrase}
+                        onPhraseSelect={selectPhrase}
+                        onUpdateTiming={updateTiming}
+                      />
+                    </CardContent>
+                  </Card>
+                  <div className="flex justify-end">
+                    <Button
+                      variant="outline"
+                      onClick={reset}
+                      className="mr-2"
+                    >
+                      Reset
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        // TODO: Save synchronized lyrics to Firebase
+                        toast({
+                          title: "Synchronization saved!",
+                          description: "Your lyric timing has been saved.",
+                        });
+                      }}
+                      disabled={!state.isSynchronized}
+                    >
+                      <Save className="mr-2 h-4 w-4" />
+                      Save Synchronization
+                    </Button>
+                  </div>
                 </div>
             )}
           </CardContent>
